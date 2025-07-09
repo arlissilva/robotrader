@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_robotrader
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: robotrader
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+    container_name: robot_trader_container
+    ports:
+      - "5555:5555"
+      - "8000:8000"
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - db
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+      - DB_URL=postgresql://postgres:postgres@db:5432/robotrader
+
+  frontend:
+    build:
+      context: ./web_interface
+    container_name: web_interface_container
+    ports:
+      - "5173:80"  # A interface será acessível em http://localhost:5173
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
